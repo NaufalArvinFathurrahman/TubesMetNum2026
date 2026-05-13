@@ -1,0 +1,35 @@
+=========================================================
+PANDUAN EKSEKUSI SIMULASI LALU LINTAS (3 BAHASA PEMROGRAMAN)
+=========================================================
+
+1. Versi C++ (Raylib) - Berjalan di dalam folder 'c++raylib'
+---------------------------------------------------------
+Langkah Eksekusi:
+cd c:\TubesMetNum2026\c++raylib
+.\Simulasi.exe
+
+Catatan Kompilasi Ulang (Hanya jika ada perubahan kode):
+cd c:\TubesMetNum2026\c++raylib
+g++ main.cpp Intersection.cpp Vehicle.cpp MathEngine.cpp -o Simulasi.exe -lraylib -lgdi32 -lwinmm
+
+
+2. Versi Python (Ursina 3D & Pygame 2D) - Berjalan di dalam folder 'python'
+---------------------------------------------------------
+Langkah Eksekusi Versi 3D Ursina:
+cd c:\TubesMetNum2026\python
+python Tubes.py
+
+Langkah Eksekusi Versi 2D Pygame:
+cd c:\TubesMetNum2026\python
+python TubesPygame.py
+
+
+3. Versi Java (Swing 2D) - Berjalan di dalam folder 'java'
+---------------------------------------------------------
+Langkah Eksekusi:
+cd c:\TubesMetNum2026\java
+java TubesJava
+
+Catatan Kompilasi Ulang (Hanya jika ada perubahan kode):
+cd c:\TubesMetNum2026\java
+javac TubesJava.java
