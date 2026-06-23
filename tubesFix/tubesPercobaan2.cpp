@@ -73,39 +73,60 @@ void faktorisasi_LU_dan_substitusi(double A[4][4], double B[4], double q[4]) {
 // =================================================================
 
 // Fungsi untuk menghitung total kemacetan (d)
-double hitung_delay_webster(double C, double q, double s, double g) {
-    // Rasio lampu hijau dan derajat kejenuhan
-    double lambda = g / C;            
-    double x = q / (lambda * s);      
+double hitung_delay_webster(double C, double* q, double s, double L) {
+    double delay_total = 0;
+    double Y = 0;
+    
+    // Menghitung rasio arus (Y) untuk 4 fase
+    for (int i = 0; i < 4; i++) {
+        Y += q[i] / s;
+    }
+    
+    // Mencegah C lebih kecil dari L
+    if (C <= L) return 999999.0;
 
-    // Menghitung Suku Pertama (Seragam) - Pengganti pow()
-    double pengali_1 = (1 - lambda);
-    double pembilang_d1 = C * (pengali_1 * pengali_1); 
-    double penyebut_d1 = 2 * (1 - (lambda * x));
-    double d1 = pembilang_d1 / penyebut_d1;
+    for (int i = 0; i < 4; i++) {
+        double y_i = q[i] / s;
+        // Pembagian waktu hijau efektif secara proporsional
+        double g_i = (y_i / Y) * (C - L);
+        
+        double lambda = g_i / C;            
+        double x = q[i] / (lambda * s);      
+        
+        // Mencegah kejenuhan lebih dari 1 (kapasitas terlampaui)
+        if (x >= 1.0) return 999999.0;
 
-    // Menghitung Suku Kedua (Acak) - Pengganti pow()
-    double pembilang_d2 = x * x; 
-    double penyebut_d2 = 2 * q * (1 - x);
-    double d2 = pembilang_d2 / penyebut_d2;
+        // Menghitung Suku Pertama (Seragam)
+        double pengali_1 = (1 - lambda);
+        double pembilang_d1 = C * (pengali_1 * pengali_1); 
+        double penyebut_d1 = 2 * (1 - (lambda * x));
+        double d1 = pembilang_d1 / penyebut_d1;
 
-    return d1 + d2;
+        // Menghitung Suku Kedua (Acak)
+        double pembilang_d2 = x * x; 
+        double penyebut_d2 = 2 * q[i] * (1 - x);
+        double d2 = pembilang_d2 / penyebut_d2;
+
+        delay_total += (d1 + d2);
+    }
+
+    return delay_total;
 }
 
 // Turunan Pertama Numerik: f'(C)
-double turunan_pertama(double C, double q, double s, double g) {
+double turunan_pertama(double C, double* q, double s, double L) {
     double h = 0.001; 
-    double delay_maju = hitung_delay_webster(C + h, q, s, g);
-    double delay_sekarang = hitung_delay_webster(C, q, s, g);
+    double delay_maju = hitung_delay_webster(C + h, q, s, L);
+    double delay_sekarang = hitung_delay_webster(C, q, s, L);
     
     return (delay_maju - delay_sekarang) / h; 
 }
 
 // Turunan Kedua Numerik: f''(C)
-double turunan_kedua(double C, double q, double s, double g) {
+double turunan_kedua(double C, double* q, double s, double L) {
     double h = 0.001;
-    double f_aksen_maju = turunan_pertama(C + h, q, s, g);
-    double f_aksen_sekarang = turunan_pertama(C, q, s, g);
+    double f_aksen_maju = turunan_pertama(C + h, q, s, L);
+    double f_aksen_sekarang = turunan_pertama(C, q, s, L);
     
     return (f_aksen_maju - f_aksen_sekarang) / h;
 }
@@ -143,18 +164,18 @@ int main() {
     
     // Parameter Lapangan
     double arus_jenuh_s = 20.0; // Saturation flow gabungan (kapasitas maksimal aspal)
-    double waktu_hijau_g = 50.0; // Anggaran waktu hijau dasar
+    double waktu_hilang_L = 15.0; // Total Waktu Hilang / Lost Time (L)
     
     // Parameter Mesin Iterasi
-    double C_sekarang = 100.0; // Tebakan awal waktu siklus
+    double C_sekarang = 20.0; // Tebakan awal waktu siklus (diubah agar tidak menjauh)
     double C_berikutnya = 0;
     double toleransi = 0.001;
     int maks_iterasi = 100;    // Batas aman infinite loop
     int iterasi = 1;
 
     while (iterasi <= maks_iterasi) {
-        double f_aksen = turunan_pertama(C_sekarang, q_total, arus_jenuh_s, waktu_hijau_g);
-        double f_double_aksen = turunan_kedua(C_sekarang, q_total, arus_jenuh_s, waktu_hijau_g);
+        double f_aksen = turunan_pertama(C_sekarang, q, arus_jenuh_s, waktu_hilang_L);
+        double f_double_aksen = turunan_kedua(C_sekarang, q, arus_jenuh_s, waktu_hilang_L);
         
         // Mencegah error pembagian dengan nol
         if (nilai_mutlak(f_double_aksen) < 0.000001) {
